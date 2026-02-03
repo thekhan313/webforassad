@@ -15,17 +15,11 @@ app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 
 // Authorization middleware for admin routes
-const adminAuth = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token || token !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-        return res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-    }
-    next();
-};
+const authMiddleware = require('./middleware/auth');
 
 // Routes
 app.use('/api', publicRoutes);              // public routes (no auth)
-app.use('/api/admin', adminAuth, adminRoutes); // admin routes protected by token
+app.use('/api/admin', adminRoutes); // admin.js handles its own auth internally
 
 // Health check
 app.get('/', (req, res) => {

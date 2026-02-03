@@ -6,15 +6,22 @@ const AdminSubmissions = () => {
     const [submissions, setSubmissions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const { user } = useAuth();
+    const token = user?.token;
+
     useEffect(() => {
-        fetch('http://localhost:4000/api/admin/submissions')
+        if (!token) return;
+
+        fetch('http://localhost:4000/api/admin/submissions', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
-                setSubmissions(data);
+                setSubmissions(Array.isArray(data) ? data : []);
                 setIsLoading(false);
             })
             .catch(() => {
-                // Fallback
+                // Fallback demo data
                 setSubmissions([
                     { id: 1, title: 'Amateur Night Live', uploader: 'User123', date: '2024-05-12', thumbnail: 'https://picsum.photos/seed/s1/320/180' },
                     { id: 2, title: 'Big City Girls', uploader: 'ProCreator', date: '2024-05-11', thumbnail: 'https://picsum.photos/seed/s2/320/180' },
@@ -22,7 +29,7 @@ const AdminSubmissions = () => {
                 ]);
                 setIsLoading(false);
             });
-    }, []);
+    }, [token]);
 
     const handleAction = (id, action) => {
         // action: approve/reject

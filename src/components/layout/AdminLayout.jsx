@@ -9,6 +9,7 @@ const AdminLayout = ({ children }) => {
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+        { name: 'Manage Videos', icon: FileVideo, path: '/admin/videos' },
         { name: 'Upload Video', icon: Upload, path: '/admin/upload' },
         { name: 'Submissions', icon: FileVideo, path: '/admin/submissions' },
         { name: 'Reports', icon: ShieldAlert, path: '/admin/reports' },

@@ -6,15 +6,22 @@ const AdminReports = () => {
     const [reports, setReports] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const { user } = useAuth();
+    const token = user?.token;
+
     useEffect(() => {
-        fetch('http://localhost:4000/api/admin/reports')
+        if (!token) return;
+
+        fetch('http://localhost:4000/api/admin/reports', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
-                setReports(data);
+                setReports(Array.isArray(data) ? data : []);
                 setIsLoading(false);
             })
             .catch(() => {
-                // Fallback
+                // Fallback demo data
                 setReports([
                     { id: 1, videoTitle: 'Explicit Content Video', reason: 'Non-consensual', count: 5, videoId: 'v123' },
                     { id: 2, videoTitle: 'Spam Video Title', reason: 'Spam/Advertisement', count: 12, videoId: 'v456' },
@@ -22,7 +29,7 @@ const AdminReports = () => {
                 ]);
                 setIsLoading(false);
             });
-    }, []);
+    }, [token]);
 
     const handleIgnore = (id) => {
         setReports(reports.filter(r => r.id !== id));

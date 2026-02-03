@@ -1,29 +1,56 @@
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-        return res.status(401).json({ error: 'Unauthorized: No token provided' });
+    if (!authHeader) {
+        return res.status(401).json({
+            error: 'Unauthorized: Authorization header missing'
+        });
     }
 
-    // Support direct token auth with ADMIN_PASSWORD as requested
+    // Expected formats:
+    // 1) Bearer <JWT_TOKEN>
+    // 2) Bearer <ADMIN_PASSWORD> (dev shortcut)
+
+    const parts = authHeader.split(' ');
+
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+        return res.status(401).json({
+            error: 'Unauthorized: Invalid authorization format'
+        });
+    }
+
+    const token = parts[1];
+
+    // ✅ DEV SHORTCUT (ADMIN PASSWORD)
     if (token === process.env.ADMIN_PASSWORD) {
-        req.user = { username: 'admin', role: 'admin' };
+        req.user = {
+            username: 'admin',
+            role: 'admin',
+            authType: 'password'
+        };
         return next();
     }
 
+    // ✅ JWT AUTH
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ error: 'Forbidden: Admin access required' });
+
+        if (!decoded || decoded.role !== 'admin') {
+            return res.status(403).json({
+                error: 'Forbidden: Admin access required'
+            });
         }
+
         req.user = decoded;
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+        console.error('JWT Error:', err.message);
+        return res.status(401).json({
+            error: 'Unauthorized: Invalid or expired token'
+        });
     }
 };
 
 module.exports = authMiddleware;
-

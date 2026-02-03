@@ -13,6 +13,7 @@ import SubmitInfo from './pages/SubmitInfo';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUpload from './pages/admin/AdminUpload';
+import AdminVideos from './pages/admin/AdminVideos';
 import AdminSubmissions from './pages/admin/AdminSubmissions';
 import AdminReports from './pages/admin/AdminReports';
 
@@ -41,6 +42,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/videos" element={<ProtectedRoute><AdminVideos /></ProtectedRoute>} />
           <Route path="/admin/upload" element={<ProtectedRoute><AdminUpload /></ProtectedRoute>} />
           <Route path="/admin/submissions" element={<ProtectedRoute><AdminSubmissions /></ProtectedRoute>} />
           <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />

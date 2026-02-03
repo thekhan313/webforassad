@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, User, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_BASE = 'http://localhost:4000';
+
 const AdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -16,25 +19,38 @@ const AdminLogin = () => {
         setError('');
         setIsSubmitting(true);
 
-        // Simulation of login
-        setTimeout(() => {
-            if (username === 'admin' && password === 'admin') {
-                login({ token: 'fake-admin-token' }, 'admin');
-                navigate('/admin/dashboard');
-            } else {
-                setError('Invalid username or password');
-                setIsSubmitting(false);
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Login failed');
             }
-        }, 1000);
+
+            // Save JWT token in AuthContext
+            login({ token: data.token }, data.role);
+
+            // Redirect to admin dashboard
+            navigate('/admin/dashboard');
+
+        } catch (err) {
+            setError(err.message);
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div style={styles.container}>
-            <div style={styles.loginBox} className="fade-in">
+            <div style={styles.loginBox}>
                 <div style={styles.header}>
                     <ShieldCheck size={48} color="var(--accent-color)" />
                     <h1 style={styles.title}>Admin Portal</h1>
-                    <p style={styles.subtitle}>Please sign in to continue</p>
+                    <p style={styles.subtitle}>Sign in to continue</p>
                 </div>
 
                 <form onSubmit={handleSubmit} style={styles.form}>
@@ -66,10 +82,10 @@ const AdminLogin = () => {
 
                     <button
                         type="submit"
-                        style={styles.loginBtn}
                         disabled={isSubmitting}
+                        style={styles.loginBtn}
                     >
-                        {isSubmitting ? 'Authenticating...' : 'Sign In'}
+                        {isSubmitting ? 'Authenticating…' : 'Sign In'}
                     </button>
                 </form>
 
@@ -144,6 +160,7 @@ const styles = {
         fontSize: '16px',
         fontWeight: 'bold',
         marginTop: '10px',
+        cursor: 'pointer'
     },
     error: {
         backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -159,6 +176,9 @@ const styles = {
         marginTop: '20px',
         color: '#666',
         fontSize: '14px',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer'
     }
 };
 

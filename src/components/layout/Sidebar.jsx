@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, TrendingUp, Clock, ThumbsUp, Heart, Film, Users, Info, ShieldAlert } from 'lucide-react';
+import { Home, TrendingUp, Clock, Film, ShieldAlert } from 'lucide-react';
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, categories = [], selectedCategory, setSelectedCategory }) => {
     const location = useLocation();
 
     const menuItems = [
@@ -11,14 +11,11 @@ const Sidebar = ({ isOpen }) => {
         { name: 'Latest', icon: Clock, path: '/search?q=latest' },
     ];
 
-    const categories = [
-        'TikTok', 'Desi', 'Actress', 'Pathan', 'Punjabi', 'Balochi', 'Indian', 'Afghan', 'Bangali', 'Nepal', 'Arab', 'All'
-    ];
-
     if (!isOpen) return null;
 
     return (
         <aside style={styles.sidebar}>
+            {/* Main menu */}
             <div style={styles.section}>
                 {menuItems.map((item) => (
                     <Link
@@ -32,22 +29,33 @@ const Sidebar = ({ isOpen }) => {
                         <item.icon size={20} style={styles.icon} />
                         <span>{item.name}</span>
                     </Link>
-                ))}
+                ))
+            }
             </div>
 
             <div style={styles.divider} />
 
+            {/* Categories */}
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Categories</h3>
                 {categories.map((cat) => (
-                    <Link
+                    <button
                         key={cat}
-                        to={`/category/${cat.toLowerCase().replace(/\s+/g, '-')}`}
-                        style={styles.navLink}
+                        onClick={() => setSelectedCategory(cat)}
+                        style={{
+                            ...styles.navLink,
+                            backgroundColor:
+                                selectedCategory === cat ? '#333' : 'transparent',
+                            color: selectedCategory === cat ? 'var(--accent-color)' : '#eee',
+                            border: 'none',
+                            textAlign: 'left',
+                            width: '100%',
+                            cursor: 'pointer',
+                        }}
                     >
                         <Film size={18} style={styles.icon} />
                         <span>{cat}</span>
-                    </Link>
+                    </button>
                 ))}
             </div>
 

@@ -1,45 +1,46 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CATEGORIES } from '../../constants/categories';
+import { useAuth } from '../../context/AuthContext';
 
 const API_BASE = 'http://localhost:4000';
-const ADMIN_TOKEN = 'admin123'; // must match backend ADMIN_PASSWORD
 
 const AdminUpload = () => {
+    const { user } = useAuth();
+    const token = user?.token;
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        categories: '',
+        categories: [],
         thumbnail: '',
         videoUrl: ''
     });
 
-    const [uploadStatus, setUploadStatus] = useState('idle'); // idle | submitting | success | error
+    const [uploadStatus, setUploadStatus] = useState('idle');
     const [error, setError] = useState('');
+
+    const handleCategoryToggle = (cat) => {
+        setFormData(prev => ({
+            ...prev,
+            categories: prev.categories.includes(cat)
+                ? prev.categories.filter(c => c !== cat)
+                : [...prev.categories, cat]
+        }));
+    };
 
     const handleUpload = async (e) => {
         e.preventDefault();
 
-        // Basic validation
-        if (!formData.title || !formData.videoUrl || !formData.categories) {
-            return setError('Title, Categories, and Video URL are required');
+        if (!formData.title || !formData.videoUrl || formData.categories.length === 0) {
+            return setError('Title, at least one Category, and Video URL are required');
         }
 
         const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
         if (!formData.videoUrl.startsWith(bunnyBaseUrl)) {
             return setError(`Video URL must start with ${bunnyBaseUrl}`);
         }
-
-        const payload = {
-            title: formData.title.trim(),
-            description: formData.description.trim(),
-            videoUrl: formData.videoUrl.trim(),
-            thumbnail: formData.thumbnail.trim(),
-            categories: formData.categories
-                .split(',')
-                .map(c => c.trim().toLowerCase())
-                .filter(Boolean)
-        };
 
         try {
             setUploadStatus('submitting');
@@ -49,22 +50,16 @@ const AdminUpload = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${ADMIN_TOKEN}`
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(formData)
             });
 
             const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Upload failed');
-            }
-
+            if (!res.ok) throw new Error(data.error || 'Upload failed');
             setUploadStatus('success');
-
         } catch (err) {
-            console.error('Admin upload error:', err);
-            setError(err.message);
+            setError(err.message || 'Upload failed');
             setUploadStatus('error');
         }
     };
@@ -73,7 +68,7 @@ const AdminUpload = () => {
         setFormData({
             title: '',
             description: '',
-            categories: '',
+            categories: [],
             thumbnail: '',
             videoUrl: ''
         });
@@ -112,13 +107,19 @@ const AdminUpload = () => {
                             onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
                         />
 
-                        <label style={styles.label}>Categories (comma separated) *</label>
-                        <input
-                            style={styles.input}
-                            placeholder="tiktok, desi, actress"
-                            value={formData.categories}
-                            onChange={e => setFormData({ ...formData, categories: e.target.value })}
-                        />
+                        <label style={styles.label}>Select Categories *</label>
+                        <div style={styles.categoryGrid}>
+                            {CATEGORIES.filter(c => c !== 'All').map(cat => (
+                                <label key={cat} style={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.categories.includes(cat)}
+                                        onChange={() => handleCategoryToggle(cat)}
+                                    />
+                                    <span>{cat}</span>
+                                </label>
+                            ))}
+                        </div>
 
                         <label style={styles.label}>Thumbnail URL (optional)</label>
                         <input
@@ -181,6 +182,22 @@ const styles = {
         border: '1px solid #333',
         color: '#fff',
         borderRadius: '6px'
+    },
+    categoryGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+        gap: '10px',
+        padding: '15px',
+        background: '#000',
+        borderRadius: '6px',
+        border: '1px solid #333'
+    },
+    checkboxLabel: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontSize: '14px',
+        color: '#fff'
     },
     submitBtn: {
         marginTop: '20px',

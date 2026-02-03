@@ -7,10 +7,19 @@ const VIDEOS_FILE = path.join(__dirname, '../data/videos.json');
 
 const getVideos = () => JSON.parse(fs.readFileSync(VIDEOS_FILE, 'utf8'));
 
-// GET /api/videos - List all videos
+// GET /api/videos - List all videos with optional category filter
 router.get('/videos', (req, res) => {
+    const category = req.query.category;
     try {
-        const videos = getVideos();
+        let videos = getVideos();
+
+        if (category && category.toLowerCase() !== 'all') {
+            const filterCat = category.toLowerCase();
+            videos = videos.filter(v =>
+                v.categories && v.categories.some(c => c.toLowerCase() === filterCat)
+            );
+        }
+
         res.json(videos);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch videos' });

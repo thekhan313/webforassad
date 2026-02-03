@@ -82,10 +82,7 @@ const VideoWatch = () => {
     );
   }
 
-  // ✅ USE STORED BUNNY URL DIRECTLY
-  const finalVideoUrl =
-    video.videoUrl ||
-    `${import.meta.env.VITE_BUNNY_PULL_ZONE}/${video.fileName}`;
+
 
   return (
     <MainLayout>
@@ -93,17 +90,22 @@ const VideoWatch = () => {
         <div style={styles.videoContent}>
           {/* VIDEO PLAYER */}
           <div style={styles.playerContainer}>
-            <video
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-              poster={video.thumbnail || 'https://picsum.photos/400/225'}
-              style={styles.player}
-            >
-              <source src={finalVideoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {video.videoUrl ? (
+              <video
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+                poster={video.thumbnail}
+                style={styles.player}
+                key={video.id}
+              >
+                <source src={video.videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div style={styles.errorPlayer}>Video source unavailable</div>
+            )}
           </div>
 
           {/* VIDEO INFO */}
