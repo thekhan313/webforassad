@@ -1,78 +1,128 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
-import { Check, X, Play, Eye } from 'lucide-react';
+import { Check, X, Play, Trash2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminSubmissions = () => {
     const [submissions, setSubmissions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const { user } = useAuth();
     const token = user?.token;
 
-    useEffect(() => {
+    const fetchSubmissions = async () => {
         if (!token) return;
-
-        fetch('http://localhost:4000/api/admin/submissions', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                setSubmissions(Array.isArray(data) ? data : []);
-                setIsLoading(false);
-            })
-            .catch(() => {
-                // Fallback demo data
-                setSubmissions([
-                    { id: 1, title: 'Amateur Night Live', uploader: 'User123', date: '2024-05-12', thumbnail: 'https://picsum.photos/seed/s1/320/180' },
-                    { id: 2, title: 'Big City Girls', uploader: 'ProCreator', date: '2024-05-11', thumbnail: 'https://picsum.photos/seed/s2/320/180' },
-                    { id: 3, title: 'Summer Heat Wave', uploader: 'HotVids', date: '2024-05-10', thumbnail: 'https://picsum.photos/seed/s3/320/180' },
-                ]);
-                setIsLoading(false);
+        setIsLoading(true);
+        try {
+            const res = await fetch('http://localhost:4000/api/admin/submissions', {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) throw new Error('Failed to fetch');
+            const data = await res.json();
+            setSubmissions(Array.isArray(data) ? data : []);
+            setError(null);
+        } catch (err) {
+            setError('Failed to load submissions');
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSubmissions();
     }, [token]);
 
-    const handleAction = (id, action) => {
-        // action: approve/reject
-        setSubmissions(submissions.filter(s => s.id !== id));
-        alert(`Submission ${id} ${action}ed`);
+    const handleAction = async (id, action) => {
+        try {
+            let res;
+            if (action === 'delete') {
+                res = await fetch(`http://localhost:4000/api/admin/submission/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } else {
+                res = await fetch(`http://localhost:4000/api/admin/submission/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: action === 'approve' ? 'approved' : 'rejected' })
+                });
+            }
+
+            if (res.ok) {
+                setSubmissions(submissions.filter(s => s.id !== id));
+            } else {
+                alert(`Failed to ${action} submission`);
+            }
+        } catch (err) {
+            alert(`Error during ${action}`);
+        }
     };
 
     return (
         <AdminLayout>
             <div className="fade-in">
-                <h1 style={styles.pageTitle}>Pending Submissions</h1>
+                <h1 style={styles.pageTitle}>User Submissions</h1>
 
                 {isLoading ? (
-                    <div>Loading...</div>
+                    <div style={styles.empty}>Loading...</div>
+                ) : error ? (
+                    <div style={styles.error}>{error}</div>
                 ) : (
                     <div style={styles.list}>
                         {submissions.map((sub) => (
                             <div key={sub.id} style={styles.card}>
-                                <div style={styles.thumbnailBox}>
-                                    <img src={sub.thumbnail} alt="" style={styles.thumb} />
-                                    <div style={styles.overlay}><Play size={32} /></div>
-                                </div>
                                 <div style={styles.info}>
                                     <h3 style={styles.subTitle}>{sub.title}</h3>
+                                    <p style={styles.subDesc}>{sub.description}</p>
                                     <div style={styles.subMeta}>
-                                        <span>by {sub.uploader}</span>
+                                        <span>by {sub.submittedBy}</span>
                                         <span>•</span>
-                                        <span>{sub.date}</span>
+                                        <span>{new Date(sub.createdAt).toLocaleDateString()}</span>
+                                        <span>•</span>
+                                        <span style={{
+                                            color: sub.status === 'approved' ? '#4caf50' :
+                                                sub.status === 'rejected' ? '#f44336' : '#ff9800'
+                                        }}>
+                                            {sub.status.toUpperCase()}
+                                        </span>
                                     </div>
+                                    {sub.videoUrl && (
+                                        <a href={sub.videoUrl} target="_blank" rel="noopener noreferrer" style={styles.link}>
+                                            View Video URL
+                                        </a>
+                                    )}
+                                    {sub.filePath && (
+                                        <div style={styles.fileInfo}>
+                                            <span style={styles.fileLabel}>Uploaded File:</span>
+                                            <a href={`http://localhost:4000${sub.filePath}`} target="_blank" rel="noopener noreferrer" style={styles.link}>
+                                                {sub.originalName || 'Download File'}
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                                 <div style={styles.actions}>
-                                    <button onClick={() => handleAction(sub.id, 'approve')} style={styles.approveBtn}>
-                                        <Check size={20} />
-                                        Approve
-                                    </button>
-                                    <button onClick={() => handleAction(sub.id, 'reject')} style={styles.rejectBtn}>
-                                        <X size={20} />
-                                        Reject
+                                    {sub.status === 'pending' && (
+                                        <>
+                                            <button onClick={() => handleAction(sub.id, 'approve')} style={styles.approveBtn} title="Approve">
+                                                <Check size={20} />
+                                            </button>
+                                            <button onClick={() => handleAction(sub.id, 'reject')} style={styles.rejectBtn} title="Reject">
+                                                <X size={20} />
+                                            </button>
+                                        </>
+                                    )}
+                                    <button onClick={() => handleAction(sub.id, 'delete')} style={styles.deleteBtn} title="Delete">
+                                        <Trash2 size={20} />
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {submissions.length === 0 && <div style={styles.empty}>No pending submissions</div>}
+                        {submissions.length === 0 && <div style={styles.empty}>No submissions found</div>}
                     </div>
                 )}
             </div>
@@ -93,50 +143,50 @@ const styles = {
     card: {
         backgroundColor: '#111',
         borderRadius: '12px',
-        padding: '16px',
+        padding: '24px',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
         gap: '20px',
         border: '1px solid #222',
-    },
-    thumbnailBox: {
-        width: '180px',
-        aspectRatio: '16/9',
-        backgroundColor: '#000',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        position: 'relative',
-        cursor: 'pointer',
-    },
-    thumb: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        opacity: 0.6,
-    },
-    overlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
     },
     info: {
         flex: 1,
     },
     subTitle: {
-        fontSize: '18px',
+        fontSize: '20px',
         marginBottom: '8px',
+        color: '#fff',
+    },
+    subDesc: {
+        fontSize: '14px',
+        color: '#aaa',
+        marginBottom: '12px',
+        lineHeight: '1.5',
     },
     subMeta: {
         display: 'flex',
-        gap: '10px',
+        gap: '12px',
         color: '#666',
+        fontSize: '13px',
+        alignItems: 'center',
+    },
+    link: {
+        display: 'inline-block',
+        marginTop: '12px',
+        color: 'var(--accent-color)',
         fontSize: '14px',
+        textDecoration: 'none',
+    },
+    fileInfo: {
+        marginTop: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    fileLabel: {
+        fontSize: '13px',
+        color: '#666',
     },
     actions: {
         display: 'flex',
@@ -145,24 +195,31 @@ const styles = {
     approveBtn: {
         backgroundColor: 'rgba(76, 175, 80, 0.1)',
         color: '#4caf50',
-        padding: '10px 20px',
-        borderRadius: '6px',
+        padding: '10px',
+        borderRadius: '8px',
         border: '1px solid rgba(76, 175, 80, 0.3)',
-        fontWeight: '600',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
+        cursor: 'pointer',
     },
     rejectBtn: {
         backgroundColor: 'rgba(244, 67, 54, 0.1)',
         color: '#f44336',
-        padding: '10px 20px',
-        borderRadius: '6px',
+        padding: '10px',
+        borderRadius: '8px',
         border: '1px solid rgba(244, 67, 54, 0.3)',
-        fontWeight: '600',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
+        cursor: 'pointer',
+    },
+    deleteBtn: {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        color: '#888',
+        padding: '10px',
+        borderRadius: '8px',
+        border: '1px solid #333',
+        cursor: 'pointer',
+    },
+    error: {
+        color: '#f44336',
+        textAlign: 'center',
+        padding: '40px',
     },
     empty: {
         textAlign: 'center',

@@ -1,14 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import { Upload, ShieldCheck, DollarSign, Clock } from 'lucide-react';
 
 const SubmitInfo = () => {
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        videoFile: null
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.title || !formData.videoFile) {
+            alert('Title and Video File are required');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const data = new FormData();
+            data.append('title', formData.title);
+            data.append('description', formData.description);
+            data.append('video', formData.videoFile);
+            data.append('submittedBy', 'guest'); // Can be updated if auth is present
+
+            const res = await fetch('http://localhost:4000/api/submit-video-file', {
+                method: 'POST',
+                body: data
+            });
+
+            if (res.ok) {
+                setSuccess(true);
+                setFormData({ title: '', description: '', videoFile: null });
+            } else {
+                const errorData = await res.json();
+                alert(`Submission failed: ${errorData.error || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error('Submission Error:', err);
+            alert('Error during submission');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <MainLayout>
             <div style={styles.container} className="fade-in">
                 <div style={styles.hero}>
                     <h1 style={styles.heroTitle}>Submit Your Content</h1>
                     <p style={styles.heroSub}>Join the world's leading community and start earning today.</p>
+                </div>
+
+                <div style={styles.formSection}>
+                    {success ? (
+                        <div style={styles.successMsg}>
+                            <h2>Thank You!</h2>
+                            <p>Your video submission has been received and is pending review.</p>
+                            <button onClick={() => setSuccess(false)} style={styles.ctaBtn}>Submit Another</button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} style={styles.form}>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Video Title <span style={styles.required}>*</span></label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    style={styles.input}
+                                    required
+                                    placeholder="Enter a catchy title"
+                                />
+                            </div>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Description</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    style={styles.textarea}
+                                    placeholder="Describe your content"
+                                />
+                            </div>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Select Video File <span style={styles.required}>*</span></label>
+                                <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={(e) => setFormData({ ...formData, videoFile: e.target.files[0] })}
+                                    style={styles.fileInput}
+                                    required
+                                />
+                                <p style={styles.fileHint}>Supported formats: MP4, MOV, AVI, etc. (Max 500MB)</p>
+                            </div>
+                            <button type="submit" disabled={isSubmitting} style={styles.ctaBtn}>
+                                {isSubmitting ? 'Uploading...' : 'Submit Video Request'}
+                            </button>
+                        </form>
+                    )}
                 </div>
 
                 <div style={styles.features}>
@@ -32,12 +122,6 @@ const SubmitInfo = () => {
                         <h3>24/7 Support</h3>
                         <p>Our dedicated team is here to help you grow your brand.</p>
                     </div>
-                </div>
-
-                <div style={styles.ctaSection}>
-                    <h2>Ready to get started?</h2>
-                    <p>Contact our partnership team to create your verified creator account.</p>
-                    <button style={styles.ctaBtn}>Contact Partnership Team</button>
                 </div>
             </div>
         </MainLayout>
@@ -65,6 +149,67 @@ const styles = {
         fontSize: '20px',
         color: '#aaa',
     },
+    formSection: {
+        backgroundColor: '#111',
+        padding: '40px',
+        borderRadius: '20px',
+        marginBottom: '80px',
+        border: '1px solid #222',
+    },
+    form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+    },
+    formGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+    },
+    label: {
+        fontSize: '14px',
+        color: '#aaa',
+        fontWeight: '600',
+    },
+    input: {
+        padding: '12px 16px',
+        backgroundColor: '#1a1a1a',
+        border: '1px solid #333',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '16px',
+    },
+    fileInput: {
+        padding: '12px 16px',
+        backgroundColor: '#1a1a1a',
+        border: '1px solid #333',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '14px',
+    },
+    fileHint: {
+        fontSize: '12px',
+        color: '#666',
+        marginTop: '4px',
+    },
+    required: {
+        color: '#f44336',
+        marginLeft: '4px',
+    },
+    textarea: {
+        padding: '12px 16px',
+        backgroundColor: '#1a1a1a',
+        border: '1px solid #333',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '16px',
+        minHeight: '100px',
+        resize: 'vertical',
+    },
+    successMsg: {
+        textAlign: 'center',
+        padding: '20px',
+    },
     features: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -82,21 +227,17 @@ const styles = {
         gap: '16px',
         border: '1px solid #333',
     },
-    ctaSection: {
-        textAlign: 'center',
-        backgroundColor: 'var(--accent-color)',
-        padding: '60px',
-        borderRadius: '20px',
-        color: '#000',
-    },
     ctaBtn: {
-        backgroundColor: '#000',
-        color: '#fff',
+        backgroundColor: 'var(--accent-color)',
+        color: '#000',
         padding: '16px 40px',
         borderRadius: '30px',
         fontSize: '18px',
         fontWeight: 'bold',
-        marginTop: '30px',
+        marginTop: '10px',
+        border: 'none',
+        cursor: 'pointer',
+        alignSelf: 'center',
     }
 };
 

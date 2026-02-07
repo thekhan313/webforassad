@@ -22,11 +22,39 @@ const VideoWatch = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const handleInteraction = (action) => {
+  const handleInteraction = async (action) => {
     if (!user) {
       setIsLoginModalOpen(true);
       return;
     }
+
+    if (action === 'Report') {
+      const reason = prompt('Please enter the reason for reporting:');
+      if (!reason) return;
+
+      try {
+        const res = await fetch('http://localhost:4000/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'video',
+            targetId: id,
+            reason,
+            reportedBy: user?.username || 'user'
+          })
+        });
+
+        if (res.ok) {
+          alert('Report submitted. Thank you.');
+        } else {
+          alert('Failed to submit report');
+        }
+      } catch (err) {
+        alert('Error submitting report');
+      }
+      return;
+    }
+
     alert(`You clicked ${action}`);
   };
 
@@ -168,6 +196,35 @@ const VideoWatch = () => {
                 style={styles.commentInput}
               />
             </div>
+
+            <div style={styles.commentList}>
+              <div style={styles.commentItem}>
+                <div style={styles.avatarMini}>A</div>
+                <div style={styles.commentBody}>
+                  <div style={styles.commentAuthor}>User123 <span style={styles.commentDate}>2 days ago</span></div>
+                  <div style={styles.commentText}>This is a great video! Keep it up.</div>
+                  <div style={styles.commentActions}>
+                    <button style={styles.commentActionBtn} onClick={() => handleInteraction('Like')}>Like</button>
+                    <button style={styles.commentActionBtn} onClick={() => {
+                      const reason = prompt('Report comment for:');
+                      if (reason) {
+                        fetch('http://localhost:4000/api/report', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            type: 'comment',
+                            targetId: 'c123',
+                            reason,
+                            reportedBy: user?.username || 'user'
+                          })
+                        }).then(() => alert('Comment reported.'));
+                      }
+                    }}>Report</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p style={styles.commentNotice}>Please login to post comments.</p>
           </div>
         </div>
@@ -268,6 +325,14 @@ const styles = {
   commentNotice: { marginTop: '10px', fontSize: '13px', color: '#888' },
   sideTitle: { fontSize: '18px', marginBottom: '16px' },
   relatedGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  commentList: { marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' },
+  commentItem: { display: 'flex', gap: '12px' },
+  commentBody: { flex: 1 },
+  commentAuthor: { fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' },
+  commentDate: { fontWeight: 'normal', color: '#666', marginLeft: '8px' },
+  commentText: { fontSize: '14px', lineHeight: '1.4' },
+  commentActions: { display: 'flex', gap: '12px', marginTop: '8px' },
+  commentActionBtn: { background: 'none', border: 'none', color: '#aaa', fontSize: '12px', cursor: 'pointer', padding: 0 },
   loading: { padding: '100px', textAlign: 'center', fontSize: '20px' }
 };
 

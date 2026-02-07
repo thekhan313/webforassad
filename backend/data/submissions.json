@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "33b3a14a-e4cc-4c5a-8c8b-07ae7c6cb448",
+    "type": "video-file",
+    "title": "fjiege h",
+    "description": "fjigejierge",
+    "filePath": "/uploads/video-1770213381497-101166693.mp4",
+    "originalName": "BigBuckBunny.mp4",
+    "submittedBy": "guest",
+    "status": "pending",
+    "createdAt": "2026-02-04T13:56:24.162Z"
+  }
+]

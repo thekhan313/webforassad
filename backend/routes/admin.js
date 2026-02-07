@@ -200,4 +200,100 @@ router.delete('/video/:id', (req, res) => {
     }
 });
 
+/**
+ * PUT /api/admin/submission/:id
+ */
+router.put('/submission/:id', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    try {
+        const submissions = getData(SUBMISSIONS_FILE);
+        const index = submissions.findIndex(s => s.id === id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+
+        submissions[index].status = status;
+        submissions[index].updatedAt = new Date().toISOString();
+        setData(SUBMISSIONS_FILE, submissions);
+
+        res.json({ success: true, submission: submissions[index] });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update submission' });
+    }
+});
+
+/**
+ * DELETE /api/admin/submission/:id
+ */
+router.delete('/submission/:id', (req, res) => {
+    try {
+        const submissions = getData(SUBMISSIONS_FILE);
+        const filtered = submissions.filter(s => s.id !== req.params.id);
+
+        if (submissions.length === filtered.length) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+
+        setData(SUBMISSIONS_FILE, filtered);
+        res.json({ success: true, message: 'Submission deleted' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete submission' });
+    }
+});
+
+/**
+ * PUT /api/admin/report/:id
+ */
+router.put('/report/:id', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['open', 'reviewed', 'resolved'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    try {
+        const reports = getData(REPORTS_FILE);
+        const index = reports.findIndex(r => r.id === id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        reports[index].status = status;
+        reports[index].updatedAt = new Date().toISOString();
+        setData(REPORTS_FILE, reports);
+
+        res.json({ success: true, report: reports[index] });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update report' });
+    }
+});
+
+/**
+ * DELETE /api/admin/report/:id
+ */
+router.delete('/report/:id', (req, res) => {
+    try {
+        const reports = getData(REPORTS_FILE);
+        const filtered = reports.filter(r => r.id !== req.params.id);
+
+        if (reports.length === filtered.length) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+
+        setData(REPORTS_FILE, filtered);
+        res.json({ success: true, message: 'Report deleted' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete report' });
+    }
+});
+
 module.exports = router;
