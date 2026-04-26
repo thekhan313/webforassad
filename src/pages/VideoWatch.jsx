@@ -8,10 +8,25 @@ import {
   Share2,
   MoreHorizontal
 } from 'lucide-react';
-import MainLayout from '../components/layout/MainLayout';
 import VideoCard from '../components/video/VideoCard';
 import LoginModal from '../components/common/LoginModal';
 import { useAuth } from '../context/AuthContext';
+import TopAdBanner from '../components/common/TopAdBanner';
+import VideoJSPlayer from '../components/video/VideoJSPlayer';
+
+const getEmbedUrl = (url) => {
+  if (!url) return '';
+  
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+
+  // Vimeo
+  const vimeoMatch = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+  return url; // Return as is if already embed or unknown
+};
 
 const VideoWatch = () => {
   const { id } = useParams();
@@ -21,6 +36,18 @@ const VideoWatch = () => {
   const [relatedVideos, setRelatedVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
+  // New States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const videosPerPage = 20;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleInteraction = async (action) => {
     if (!user) {
@@ -92,45 +119,145 @@ const VideoWatch = () => {
       .catch(() => setRelatedVideos([]));
 
     window.scrollTo(0, 0);
+    setCurrentPage(1); // Reset page on video change
   }, [id]);
+
+  const handlePageChange = (pageNum) => {
+    setCurrentPage(pageNum);
+    const relatedSection = document.getElementById('related-section');
+    if (relatedSection) {
+      relatedSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const paginatedVideos = relatedVideos.slice(
+    (currentPage - 1) * videosPerPage,
+    currentPage * videosPerPage
+  );
+
+  const totalPages = Math.max(1, Math.ceil(relatedVideos.length / videosPerPage) || 5);
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div style={styles.loading}>Loading video...</div>
-      </MainLayout>
+      <div style={styles.loading}>Loading video...</div>
     );
   }
 
   if (!video) {
     return (
-      <MainLayout>
-        <div>Video not found</div>
-      </MainLayout>
+      <div>Video not found</div>
     );
   }
 
+  const CommentsSection = () => (
+    <div style={{ ...styles.comments, marginTop: isMobile ? '40px' : '0' }}>
+      <div style={styles.commentsHeader}>
+        <h3>Comments</h3>
+        <button 
+          id="comments-toggle-btn"
+          style={styles.toggleBtn}
+          onClick={() => setIsCommentsVisible(!isCommentsVisible)}
+        >
+          {isCommentsVisible ? 'Hide Comments' : 'Show Comments'}
+        </button>
+      </div>
+      
+      {isCommentsVisible && (
+        <div className="fade-in">
+          <div style={styles.commentInputRow}>
+            <div style={styles.avatarMini}>U</div>
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              style={styles.commentInput}
+            />
+          </div>
 
+          <div style={styles.commentList}>
+            <div style={styles.commentItem}>
+              <div style={styles.avatarMini}>A</div>
+              <div style={styles.commentBody}>
+                <div style={styles.commentAuthor}>User123 <span style={styles.commentDate}>2 days ago</span></div>
+                <div style={styles.commentText}>This is a great video! Keep it up.</div>
+                <div style={styles.commentActions}>
+                  <button style={styles.commentActionBtn} onClick={() => handleInteraction('Like')}>Like</button>
+                  <button style={styles.commentActionBtn} onClick={() => {
+                    const reason = prompt('Report comment for:');
+                    if (reason) {
+                      fetch('http://localhost:4000/api/report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          type: 'comment',
+                          targetId: 'c123',
+                          reason,
+                          reportedBy: user?.username || 'user'
+                        })
+                      }).then(() => alert('Comment reported.'));
+                    }
+                  }}>Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p style={styles.commentNotice}>Please login to post comments.</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <MainLayout>
-      <div style={styles.container} className="fade-in">
-        <div style={styles.videoContent}>
+    <>
+      <div 
+        style={{ 
+          ...styles.container, 
+          flexDirection: isMobile ? 'column' : 'row' 
+        }} 
+        className="fade-in"
+      >
+      <div style={styles.videoContent}>
+          {/* AD BANNER */}
+          <TopAdBanner />
+          
           {/* VIDEO PLAYER */}
           <div style={styles.playerContainer}>
             {video.videoUrl ? (
-              <video
-                controls
-                autoPlay
-                playsInline
-                preload="metadata"
-                poster={video.thumbnail}
-                style={styles.player}
-                key={video.id}
-              >
-                <source src={video.videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              video.sourceType === 'embedded' ? (
+                <iframe
+                  src={getEmbedUrl(video.videoUrl)}
+                  style={styles.player}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={video.title}
+                />
+              ) : (
+                <VideoJSPlayer 
+                  options={{
+                    autoplay: true,
+                    controls: true,
+                    responsive: true,
+                    fluid: true,
+                    disablePictureInPicture: false,
+                    sources: [{
+                      src: video.videoUrl,
+                      type: video.videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4'
+                    }],
+                    controlBar: {
+                      children: [
+                        'playToggle',
+                        'volumePanel',
+                        'currentTimeDisplay',
+                        'timeDivider',
+                        'durationDisplay',
+                        'progressControl',
+                        'remainingTimeDisplay',
+                        'fullscreenToggle',
+                      ],
+                    },
+                  }} 
+                />
+              )
             ) : (
               <div style={styles.errorPlayer}>Video source unavailable</div>
             )}
@@ -185,58 +312,40 @@ const VideoWatch = () => {
 
           <div style={styles.divider} />
 
-          {/* COMMENTS */}
-          <div style={styles.comments}>
-            <h3>Comments</h3>
-            <div style={styles.commentInputRow}>
-              <div style={styles.avatarMini}>U</div>
-              <input
-                type="text"
-                placeholder="Add a comment..."
-                style={styles.commentInput}
-              />
-            </div>
-
-            <div style={styles.commentList}>
-              <div style={styles.commentItem}>
-                <div style={styles.avatarMini}>A</div>
-                <div style={styles.commentBody}>
-                  <div style={styles.commentAuthor}>User123 <span style={styles.commentDate}>2 days ago</span></div>
-                  <div style={styles.commentText}>This is a great video! Keep it up.</div>
-                  <div style={styles.commentActions}>
-                    <button style={styles.commentActionBtn} onClick={() => handleInteraction('Like')}>Like</button>
-                    <button style={styles.commentActionBtn} onClick={() => {
-                      const reason = prompt('Report comment for:');
-                      if (reason) {
-                        fetch('http://localhost:4000/api/report', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            type: 'comment',
-                            targetId: 'c123',
-                            reason,
-                            reportedBy: user?.username || 'user'
-                          })
-                        }).then(() => alert('Comment reported.'));
-                      }
-                    }}>Report</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <p style={styles.commentNotice}>Please login to post comments.</p>
-          </div>
+          {/* COMMENTS (Desktop Only) */}
+          {!isMobile && <CommentsSection />}
         </div>
 
         {/* RELATED VIDEOS */}
-        <div style={styles.relatedSide}>
+        <div style={styles.relatedSide} id="related-section">
           <h3 style={styles.sideTitle}>Related Videos</h3>
           <div style={styles.relatedGrid}>
-            {relatedVideos.map(v => (
+            {paginatedVideos.map(v => (
               <VideoCard key={v.id} video={v} />
             ))}
           </div>
+
+          {/* PAGINATION */}
+          {relatedVideos.length > 0 && (
+            <div style={styles.pagination}>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => handlePageChange(i + 1)}
+                  style={{
+                    ...styles.pageBtn,
+                    backgroundColor: currentPage === i + 1 ? 'var(--accent-color)' : '#222',
+                    color: currentPage === i + 1 ? '#000' : '#fff'
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* COMMENTS (Mobile Only) */}
+          {isMobile && <CommentsSection />}
         </div>
       </div>
 
@@ -244,14 +353,17 @@ const VideoWatch = () => {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
       />
-    </MainLayout>
+    </>
   );
 };
 
 const styles = {
-  container: { display: 'flex', gap: '24px' },
-  videoContent: { flex: 3 },
-  relatedSide: { flex: 1, minWidth: '320px' },
+  container: { 
+    display: 'flex', 
+    gap: '24px',
+  },
+  videoContent: { flex: 3, width: '100%' },
+  relatedSide: { flex: 1, minWidth: '320px', width: '100%' },
   playerContainer: {
     width: '100%',
     aspectRatio: '16/9',
@@ -333,6 +445,34 @@ const styles = {
   commentText: { fontSize: '14px', lineHeight: '1.4' },
   commentActions: { display: 'flex', gap: '12px', marginTop: '8px' },
   commentActionBtn: { background: 'none', border: 'none', color: '#aaa', fontSize: '12px', cursor: 'pointer', padding: 0 },
+  commentsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
+  toggleBtn: {
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '6px 16px',
+    borderRadius: '20px',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  pagination: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '24px',
+    justifyContent: 'center',
+    padding: '10px 0'
+  },
+  pageBtn: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    transition: 'all 0.2s',
+    cursor: 'pointer'
+  },
   loading: { padding: '100px', textAlign: 'center', fontSize: '20px' }
 };
 

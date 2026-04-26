@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import MainLayout from '../components/layout/MainLayout';
 import { Upload, ShieldCheck, DollarSign, Clock } from 'lucide-react';
 
 const SubmitInfo = () => {
@@ -47,8 +46,7 @@ const SubmitInfo = () => {
     };
 
     return (
-        <MainLayout>
-            <div style={styles.container} className="fade-in">
+        <div style={styles.container} className="fade-in">
                 <div style={styles.hero}>
                     <h1 style={styles.heroTitle}>Submit Your Content</h1>
                     <p style={styles.heroSub}>Join the world's leading community and start earning today.</p>
@@ -124,7 +122,6 @@ const SubmitInfo = () => {
                     </div>
                 </div>
             </div>
-        </MainLayout>
     );
 };
 

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import MainLayout from '../components/layout/MainLayout';
 import VideoCard from '../components/video/VideoCard';
+import { useUI } from '../context/UIContext';
 import AdCard from '../components/video/AdCard';
 import { CATEGORIES } from '../constants/categories';
 
 const Home = () => {
+    const { selectedCategory } = useUI();
     const [videos, setVideos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedCategory, setSelectedCategory] = useState('All');
 
     useEffect(() => {
         const fetchVideos = async () => {
@@ -45,12 +45,12 @@ const Home = () => {
     };
 
     return (
-        <MainLayout selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory}>
+        <>
             <h2 style={styles.title}>
                 {selectedCategory === 'All' ? 'Recommended For You' : `Videos in ${selectedCategory}`}
             </h2>
             {renderContent()}
-        </MainLayout>
+        </>
     );
 };
 

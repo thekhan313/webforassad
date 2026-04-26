@@ -136,6 +136,25 @@ const AdminVideos = () => {
                                     onChange={e => setEditingVideo({ ...editingVideo, title: e.target.value })}
                                 />
 
+                                <label style={styles.label}>Video Source</label>
+                                <select
+                                    style={styles.input}
+                                    value={editingVideo.sourceType || 'bunny'}
+                                    onChange={e => setEditingVideo({ ...editingVideo, sourceType: e.target.value })}
+                                >
+                                    <option value="bunny">Bunny (CDN)</option>
+                                    <option value="embedded">Embedded (YouTube, Vimeo, etc.)</option>
+                                </select>
+
+                                <label style={styles.label}>
+                                    {editingVideo.sourceType === 'embedded' ? 'Video Link (Embed/URL)' : 'Video URL'}
+                                </label>
+                                <input
+                                    style={styles.input}
+                                    value={editingVideo.videoUrl}
+                                    onChange={e => setEditingVideo({ ...editingVideo, videoUrl: e.target.value })}
+                                />
+
                                 <label style={styles.label}>Thumbnail URL</label>
                                 <input
                                     style={styles.input}

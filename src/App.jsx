@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UIProvider } from './context/UIContext';
+import MainLayout from './components/layout/MainLayout';
 
 // Public Pages
 import Home from './pages/Home';
@@ -8,6 +10,9 @@ import PreRoll from './pages/PreRoll';
 import VideoWatch from './pages/VideoWatch';
 import SearchResults from './pages/SearchResults';
 import SubmitInfo from './pages/SubmitInfo';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin';
@@ -31,25 +36,32 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/preroll/:id" element={<PreRoll />} />
-          <Route path="/video/:id" element={<VideoWatch />} />
-          <Route path="/search" element={<SearchResults />} />
-          <Route path="/submit" element={<SubmitInfo />} />
+        <UIProvider>
+          <Routes>
+            {/* User Routes (Wrapped in MainLayout) */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/preroll/:id" element={<PreRoll />} />
+              <Route path="/video/:id" element={<VideoWatch />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/submit" element={<SubmitInfo />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/videos" element={<ProtectedRoute><AdminVideos /></ProtectedRoute>} />
-          <Route path="/admin/upload" element={<ProtectedRoute><AdminUpload /></ProtectedRoute>} />
-          <Route path="/admin/submissions" element={<ProtectedRoute><AdminSubmissions /></ProtectedRoute>} />
-          <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
+            {/* Admin Routes (No Sidebar) */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/videos" element={<ProtectedRoute><AdminVideos /></ProtectedRoute>} />
+            <Route path="/admin/upload" element={<ProtectedRoute><AdminUpload /></ProtectedRoute>} />
+            <Route path="/admin/submissions" element={<ProtectedRoute><AdminSubmissions /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </UIProvider>
       </AuthProvider>
     </Router>
   );

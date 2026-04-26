@@ -1,9 +1,24 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, TrendingUp, Clock, Film, ShieldAlert } from 'lucide-react';
+import { useUI } from '../../context/UIContext';
+import { CATEGORIES } from '../../constants/categories';
 
-const Sidebar = ({ isOpen, categories = [], selectedCategory, setSelectedCategory }) => {
+const Sidebar = () => {
+    const { isSidebarOpen: isOpen, selectedCategory, setSelectedCategory, isMobile, closeSidebar } = useUI();
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleCategoryClick = (cat) => {
+        setSelectedCategory(cat);
+        if (location.pathname !== '/') {
+            navigate('/');
+        }
+        if (isMobile) {
+            closeSidebar();
+        }
+    };
+
+    const categories = CATEGORIES;
 
     const menuItems = [
         { name: 'Home', icon: Home, path: '/' },
@@ -11,10 +26,14 @@ const Sidebar = ({ isOpen, categories = [], selectedCategory, setSelectedCategor
         { name: 'Latest', icon: Clock, path: '/search?q=latest' },
     ];
 
-    if (!isOpen) return null;
+    const transitionStyle = {
+        transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+        boxShadow: isOpen ? '5px 0 15px rgba(0,0,0,0.5)' : 'none',
+    };
 
     return (
-        <aside style={styles.sidebar}>
+        <aside style={{ ...styles.sidebar, ...transitionStyle }}>
             {/* Main menu */}
             <div style={styles.section}>
                 {menuItems.map((item) => (
@@ -41,7 +60,7 @@ const Sidebar = ({ isOpen, categories = [], selectedCategory, setSelectedCategor
                 {categories.map((cat) => (
                     <button
                         key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => handleCategoryClick(cat)}
                         style={{
                             ...styles.navLink,
                             backgroundColor:

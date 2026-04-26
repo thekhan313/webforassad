@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import MainLayout from '../components/layout/MainLayout';
 import VideoCard from '../components/video/VideoCard';
 
 const SearchResults = () => {
@@ -30,8 +29,7 @@ const SearchResults = () => {
     }, [query]);
 
     return (
-        <MainLayout>
-            <div className="fade-in">
+        <div className="fade-in">
                 <h2 style={styles.title}>Search Results for: <span style={styles.query}>{query}</span></h2>
 
                 {isLoading ? (
@@ -47,8 +45,7 @@ const SearchResults = () => {
                 {!isLoading && results.length === 0 && (
                     <div style={styles.noResults}>No videos found for "{query}"</div>
                 )}
-            </div>
-        </MainLayout>
+        </div>
     );
 };
 

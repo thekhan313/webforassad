@@ -15,7 +15,8 @@ const AdminUpload = () => {
         description: '',
         categories: [],
         thumbnail: '',
-        videoUrl: ''
+        videoUrl: '',
+        sourceType: 'bunny'
     });
 
     const [uploadStatus, setUploadStatus] = useState('idle');
@@ -37,9 +38,17 @@ const AdminUpload = () => {
             return setError('Title, at least one Category, and Video URL are required');
         }
 
-        const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
-        if (!formData.videoUrl.startsWith(bunnyBaseUrl)) {
-            return setError(`Video URL must start with ${bunnyBaseUrl}`);
+        if (formData.sourceType === 'bunny') {
+            const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
+            if (!formData.videoUrl.startsWith(bunnyBaseUrl)) {
+                return setError(`Video URL must start with ${bunnyBaseUrl}`);
+            }
+        } else if (formData.sourceType === 'embedded') {
+            try {
+                new URL(formData.videoUrl);
+            } catch (e) {
+                return setError('Please enter a valid Video URL');
+            }
         }
 
         try {
@@ -70,7 +79,8 @@ const AdminUpload = () => {
             description: '',
             categories: [],
             thumbnail: '',
-            videoUrl: ''
+            videoUrl: '',
+            sourceType: 'bunny'
         });
         setUploadStatus('idle');
         setError('');
@@ -92,6 +102,16 @@ const AdminUpload = () => {
                     </div>
                 ) : (
                     <form onSubmit={handleUpload} style={styles.uploadCard}>
+                        <label style={styles.label}>Video Source *</label>
+                        <select
+                            style={styles.input}
+                            value={formData.sourceType}
+                            onChange={e => setFormData({ ...formData, sourceType: e.target.value })}
+                        >
+                            <option value="bunny">Bunny (CDN)</option>
+                            <option value="embedded">Embedded (YouTube, Vimeo, etc.)</option>
+                        </select>
+
                         <label style={styles.label}>Title *</label>
                         <input
                             style={styles.input}
@@ -99,10 +119,15 @@ const AdminUpload = () => {
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
                         />
 
-                        <label style={styles.label}>Bunny Video URL *</label>
+                        <label style={styles.label}>
+                            {formData.sourceType === 'bunny' ? 'Bunny Video URL *' : 'Video Link (Embed/URL) *'}
+                        </label>
                         <input
                             style={styles.input}
-                            placeholder="https://pvideos-cdn.b-cdn.net/video.mp4"
+                            placeholder={formData.sourceType === 'bunny' 
+                                ? "https://pvideos-cdn.b-cdn.net/video.mp4" 
+                                : "https://www.youtube.com/watch?v=..."
+                            }
                             value={formData.videoUrl}
                             onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
                         />

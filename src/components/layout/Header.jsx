@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Upload, User, Menu, X, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 import LoginModal from '../common/LoginModal';
 
-const Header = ({ toggleSidebar }) => {
+const Header = () => {
+    const { toggleSidebar } = useUI();
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const { user, isAdmin, logout } = useAuth();

@@ -16,7 +16,7 @@ const setData = (file, data) =>
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
 /**
- * POST /api/admin/login
+ * POST /api/login
  */
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
@@ -45,7 +45,7 @@ router.use(authMiddleware);
  * Metadata only (Bunny CDN URL)
  */
 router.post('/upload-video', (req, res) => {
-    const { title, description, categories, videoUrl, thumbnail } = req.body;
+    const { title, description, categories, videoUrl, thumbnail, sourceType = 'bunny' } = req.body;
 
     if (!title || !videoUrl || !Array.isArray(categories) || categories.length === 0) {
         return res.status(400).json({
@@ -53,11 +53,20 @@ router.post('/upload-video', (req, res) => {
         });
     }
 
-    const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
-    if (!videoUrl.startsWith(bunnyBaseUrl)) {
-        return res.status(400).json({
-            error: `Invalid Video URL. Must start with ${bunnyBaseUrl}`
-        });
+    if (sourceType === 'bunny') {
+        const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
+        if (!videoUrl.startsWith(bunnyBaseUrl)) {
+            return res.status(400).json({
+                error: `Invalid Video URL. Must start with ${bunnyBaseUrl}`
+            });
+        }
+    } else if (sourceType === 'embedded') {
+        // Simple URL validation for embedded
+        try {
+            new URL(videoUrl);
+        } catch (e) {
+            return res.status(400).json({ error: 'Invalid Embedded Video URL' });
+        }
     }
 
     try {
@@ -74,6 +83,7 @@ router.post('/upload-video', (req, res) => {
             categories: normalizedCategories,
             videoUrl,
             thumbnail: thumbnail?.trim() || '',
+            sourceType,
             views: 0,
             rating: '100%',
             createdAt: new Date().toISOString()
@@ -132,13 +142,31 @@ router.get('/reports', (req, res) => {
  * PUT /api/admin/video/:id
  */
 router.put('/video/:id', (req, res) => {
-    const { title, description, categories, videoUrl, thumbnail } = req.body;
+    const { title, description, categories, videoUrl, thumbnail, sourceType } = req.body;
     const { id } = req.params;
 
     if (!title || !videoUrl || !Array.isArray(categories)) {
         return res.status(400).json({
             error: 'Title, Video URL and categories are required'
         });
+    }
+
+    // Apply validation based on sourceType if it's being updated or already exists
+    const effectiveSourceType = sourceType || 'bunny'; 
+
+    if (effectiveSourceType === 'bunny') {
+        const bunnyBaseUrl = 'https://pvideos-cdn.b-cdn.net/';
+        if (!videoUrl.startsWith(bunnyBaseUrl)) {
+            return res.status(400).json({
+                error: `Invalid Video URL. Must start with ${bunnyBaseUrl}`
+            });
+        }
+    } else if (effectiveSourceType === 'embedded') {
+        try {
+            new URL(videoUrl);
+        } catch (e) {
+            return res.status(400).json({ error: 'Invalid Embedded Video URL' });
+        }
     }
 
     try {
@@ -159,6 +187,7 @@ router.put('/video/:id', (req, res) => {
             description: description?.trim() || '',
             categories: updatedCategories,
             videoUrl,
+            sourceType: sourceType || videos[index].sourceType || 'bunny',
             thumbnail: thumbnail?.trim() || videos[index].thumbnail,
             updatedAt: new Date().toISOString()
         };
