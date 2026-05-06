@@ -11,7 +11,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors()); // enable CORS for all origins
+const corsOptions = {
+    origin: process.env.CLIENT_URL || '*',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -37,6 +41,12 @@ app.use((err, req, res, next) => {
 // Start server
 const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Environment Variables Check:');
+    console.log(`- ADMIN_USERNAME: ${process.env.ADMIN_USERNAME ? 'DEFINED' : 'MISSING'}`);
+    console.log(`- ADMIN_PASSWORD: ${process.env.ADMIN_PASSWORD ? 'DEFINED' : 'MISSING'}`);
+    console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? 'DEFINED' : 'MISSING'}`);
+    console.log(`- CLIENT_URL: ${process.env.CLIENT_URL || 'NOT SET (allowing all origins)'}`);
+    
     console.log(`Public APIs: http://localhost:${PORT}/api/videos`);
     console.log(`Admin APIs (require token): http://localhost:${PORT}/api/admin`);
 });

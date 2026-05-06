@@ -13,6 +13,7 @@ import LoginModal from '../components/common/LoginModal';
 import { useAuth } from '../context/AuthContext';
 import TopAdBanner from '../components/common/TopAdBanner';
 import VideoJSPlayer from '../components/video/VideoJSPlayer';
+import { API_BASE } from '../config';
 
 const getEmbedUrl = (url) => {
   if (!url) return '';
@@ -89,7 +90,7 @@ const VideoWatch = () => {
     setIsLoading(true);
 
     // Fetch video details
-    fetch(`http://localhost:4000/api/video/${id}`)
+    fetch(`${API_BASE}/api/video/${id}`)
       .then(res => res.json())
       .then(data => {
         setVideo(data);
@@ -113,7 +114,7 @@ const VideoWatch = () => {
       });
 
     // Fetch related videos
-    fetch(`http://localhost:4000/api/videos?related=${id}`)
+    fetch(`${API_BASE}/api/videos?related=${id}`)
       .then(res => res.json())
       .then(data => setRelatedVideos(data))
       .catch(() => setRelatedVideos([]));

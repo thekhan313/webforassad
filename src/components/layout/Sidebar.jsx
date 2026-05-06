@@ -1,12 +1,21 @@
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, TrendingUp, Clock, Film, ShieldAlert } from 'lucide-react';
+import { Home, TrendingUp, Clock, Film, ShieldAlert, Upload, LogIn, User, LogOut } from 'lucide-react';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
 import { CATEGORIES } from '../../constants/categories';
+import LoginModal from '../common/LoginModal';
 
 const Sidebar = () => {
     const { isSidebarOpen: isOpen, selectedCategory, setSelectedCategory, isMobile, closeSidebar } = useUI();
+    const { user, isAdmin, logout } = useAuth();
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+
+    const handleLinkClick = (path) => {
+        if (isMobile) closeSidebar();
+    };
 
     const handleCategoryClick = (cat) => {
         setSelectedCategory(cat);
@@ -16,6 +25,11 @@ const Sidebar = () => {
         if (isMobile) {
             closeSidebar();
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        if (isMobile) closeSidebar();
     };
 
     const categories = CATEGORIES;
@@ -33,59 +47,94 @@ const Sidebar = () => {
     };
 
     return (
-        <aside style={{ ...styles.sidebar, ...transitionStyle }}>
-            {/* Main menu */}
-            <div style={styles.section}>
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.name}
-                        to={item.path}
-                        style={{
-                            ...styles.navLink,
-                            ...(location.pathname === item.path ? styles.activeLink : {}),
-                        }}
-                    >
-                        <item.icon size={20} style={styles.icon} />
-                        <span>{item.name}</span>
-                    </Link>
-                ))
-            }
-            </div>
+        <>
+            <aside style={{ ...styles.sidebar, ...transitionStyle }}>
+                {/* Mobile Header Items */}
+                {isMobile && (
+                    <div style={styles.mobileOnlySection}>
+                        {user && (
+                            <div style={styles.userProfile}>
+                                <div style={styles.avatar}>
+                                    <User size={24} />
+                                </div>
+                                <span style={styles.userName}>{user.email?.split('@')[0] || 'User'}</span>
+                            </div>
+                        )}
+                        
+                        <Link to="/submit" style={styles.navLink} onClick={() => handleLinkClick('/submit')}>
+                            <Upload size={20} style={styles.icon} />
+                            <span>Submit Video</span>
+                        </Link>
 
-            <div style={styles.divider} />
+                        {!user ? (
+                            <button onClick={() => setIsLoginModalOpen(true)} style={styles.navLinkButton}>
+                                <LogIn size={20} style={styles.icon} />
+                                <span>Login</span>
+                            </button>
+                        ) : (
+                            <button onClick={handleLogout} style={styles.navLinkButton}>
+                                <LogOut size={20} style={styles.icon} />
+                                <span>Logout</span>
+                            </button>
+                        )}
+                        <div style={styles.divider} />
+                    </div>
+                )}
 
-            {/* Categories */}
-            <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Categories</h3>
-                {categories.map((cat) => (
-                    <button
-                        key={cat}
-                        onClick={() => handleCategoryClick(cat)}
-                        style={{
-                            ...styles.navLink,
-                            backgroundColor:
-                                selectedCategory === cat ? '#333' : 'transparent',
-                            color: selectedCategory === cat ? 'var(--accent-color)' : '#eee',
-                            border: 'none',
-                            textAlign: 'left',
-                            width: '100%',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        <Film size={18} style={styles.icon} />
-                        <span>{cat}</span>
-                    </button>
-                ))}
-            </div>
+                {/* Main menu */}
+                <div style={styles.section}>
+                    {menuItems.map((item) => (
+                        <Link
+                            key={item.name}
+                            to={item.path}
+                            onClick={() => handleLinkClick(item.path)}
+                            style={{
+                                ...styles.navLink,
+                                ...(location.pathname === item.path ? styles.activeLink : {}),
+                            }}
+                        >
+                            <item.icon size={20} style={styles.icon} />
+                            <span>{item.name}</span>
+                        </Link>
+                    ))
+                }
+                </div>
 
-            <div style={styles.adminSection}>
                 <div style={styles.divider} />
-                <Link to="/admin/login" style={styles.navLink}>
-                    <ShieldAlert size={18} style={styles.icon} />
-                    <span>Admin Login</span>
-                </Link>
-            </div>
-        </aside>
+
+                {/* Categories */}
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>Categories</h3>
+                    {categories.map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => handleCategoryClick(cat)}
+                            style={{
+                                ...styles.navLink,
+                                backgroundColor:
+                                    selectedCategory === cat ? '#333' : 'transparent',
+                                color: selectedCategory === cat ? 'var(--accent-color)' : '#eee',
+                                border: 'none',
+                                textAlign: 'left',
+                                width: '100%',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <Film size={18} style={styles.icon} />
+                            <span>{cat}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div style={styles.adminSection}>
+                </div>
+            </aside>
+
+            <LoginModal 
+                isOpen={isLoginModalOpen} 
+                onClose={() => setIsLoginModalOpen(false)} 
+            />
+        </>
     );
 };
 
@@ -103,6 +152,34 @@ const styles = {
         zIndex: 900,
         display: 'flex',
         flexDirection: 'column',
+    },
+    mobileOnlySection: {
+        padding: '0 8px',
+    },
+    userProfile: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '12px',
+        gap: '12px',
+        marginBottom: '8px',
+        backgroundColor: '#222',
+        borderRadius: '8px',
+        margin: '0 8px 12px 8px',
+    },
+    avatar: {
+        width: '36px',
+        height: '36px',
+        backgroundColor: '#333',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--accent-color)',
+    },
+    userName: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#fff',
     },
     section: {
         padding: '0 8px',
@@ -127,6 +204,18 @@ const styles = {
         color: '#eee',
         fontSize: '14px',
         transition: 'background 0.2s',
+    },
+    navLinkButton: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '10px 12px',
+        borderRadius: '4px',
+        color: '#eee',
+        fontSize: '14px',
+        transition: 'background 0.2s',
+        width: '100%',
+        textAlign: 'left',
+        cursor: 'pointer',
     },
     activeLink: {
         backgroundColor: '#333',

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import VideoCard from '../components/video/VideoCard';
+import { API_BASE } from '../config';
 
 const SearchResults = () => {
     const [searchParams] = useSearchParams();
@@ -10,7 +11,7 @@ const SearchResults = () => {
 
     useEffect(() => {
         setIsLoading(true);
-        fetch(`http://localhost:4000/api/search?q=${query}`)
+        fetch(`${API_BASE}/api/search?q=${query}`)
             .then(res => res.json())
             .then(data => {
                 setResults(data);

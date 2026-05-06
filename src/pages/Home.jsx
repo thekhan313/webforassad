@@ -3,6 +3,7 @@ import VideoCard from '../components/video/VideoCard';
 import { useUI } from '../context/UIContext';
 import AdCard from '../components/video/AdCard';
 import { CATEGORIES } from '../constants/categories';
+import { API_BASE } from '../config';
 
 const Home = () => {
     const { selectedCategory } = useUI();
@@ -14,8 +15,8 @@ const Home = () => {
             try {
                 setIsLoading(true);
                 const url = selectedCategory === 'All'
-                    ? 'http://localhost:4000/api/videos'
-                    : `http://localhost:4000/api/videos?category=${selectedCategory}`;
+                    ? `${API_BASE}/api/videos`
+                    : `${API_BASE}/api/videos?category=${selectedCategory}`;
 
                 const res = await fetch(url);
                 const data = await res.json();

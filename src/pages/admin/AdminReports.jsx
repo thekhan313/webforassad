@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { Trash2, AlertTriangle, ShieldCheck, Flag, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../config';
 
 const AdminReports = () => {
     const [reports, setReports] = useState([]);
@@ -15,7 +16,7 @@ const AdminReports = () => {
         if (!token) return;
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:4000/api/admin/reports', {
+            const res = await fetch(`${API_BASE}/api/admin/reports`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch');
@@ -38,12 +39,12 @@ const AdminReports = () => {
         try {
             let res;
             if (action === 'delete') {
-                res = await fetch(`http://localhost:4000/api/admin/report/${id}`, {
+                res = await fetch(`${API_BASE}/api/admin/report/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else {
-                res = await fetch(`http://localhost:4000/api/admin/report/${id}`, {
+                res = await fetch(`${API_BASE}/api/admin/report/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,

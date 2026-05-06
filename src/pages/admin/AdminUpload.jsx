@@ -3,8 +3,9 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { CATEGORIES } from '../../constants/categories';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../config';
 
-const API_BASE = 'http://localhost:4000';
+
 
 const AdminUpload = () => {
     const { user } = useAuth();

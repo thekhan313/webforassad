@@ -21,19 +21,44 @@ const setData = (file, data) =>
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
+    // Temporary debug logs (availability only)
+    console.log('Login attempt received');
+    console.log('ADMIN_USERNAME defined:', !!process.env.ADMIN_USERNAME);
+    console.log('ADMIN_PASSWORD defined:', !!process.env.ADMIN_PASSWORD);
+    console.log('JWT_SECRET defined:', !!process.env.JWT_SECRET);
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
     if (
-        username === process.env.ADMIN_USERNAME &&
-        password === process.env.ADMIN_PASSWORD
+        trimmedUsername === process.env.ADMIN_USERNAME &&
+        trimmedPassword === process.env.ADMIN_PASSWORD
     ) {
+        if (!process.env.JWT_SECRET) {
+            console.error('CRITICAL: JWT_SECRET is not defined in environment');
+            return res.status(500).json({ error: 'Server configuration error' });
+        }
+
         const token = jwt.sign(
-            { username, role: 'admin' },
+            { username: trimmedUsername, role: 'admin' },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        return res.json({ token, role: 'admin' });
+        console.log('Admin login successful');
+        return res.json({ 
+            success: true,
+            message: 'Login successful',
+            token, 
+            role: 'admin' 
+        });
     }
 
+    console.log('Admin login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });
 });
 

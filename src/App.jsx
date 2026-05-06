@@ -22,12 +22,14 @@ import AdminVideos from './pages/admin/AdminVideos';
 import AdminSubmissions from './pages/admin/AdminSubmissions';
 import AdminReports from './pages/admin/AdminReports';
 
+import ConsentOverlay from './components/common/ConsentOverlay';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin, isLoading } = useAuth();
 
   if (isLoading) return <div>Loading...</div>;
-  if (!user || !isAdmin) return <Navigate to="/admin/login" />;
+  if (!user || !isAdmin) return <Navigate to="/" />;
 
   return children;
 };
@@ -37,6 +39,7 @@ function App() {
     <Router>
       <AuthProvider>
         <UIProvider>
+          <ConsentOverlay />
           <Routes>
             {/* User Routes (Wrapped in MainLayout) */}
             <Route element={<MainLayout />}>
@@ -51,7 +54,6 @@ function App() {
             </Route>
 
             {/* Admin Routes (No Sidebar) */}
-            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/videos" element={<ProtectedRoute><AdminVideos /></ProtectedRoute>} />
             <Route path="/admin/upload" element={<ProtectedRoute><AdminUpload /></ProtectedRoute>} />

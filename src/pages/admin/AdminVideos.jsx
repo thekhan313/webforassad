@@ -3,8 +3,9 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import { Edit, Trash2, X, AlertCircle, Save } from 'lucide-react';
 import { CATEGORIES } from '../../constants/categories';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../config';
 
-const API_BASE = 'http://localhost:4000';
+
 
 const AdminVideos = () => {
     const { token } = useAuth();

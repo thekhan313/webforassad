@@ -6,7 +6,7 @@ import { useUI } from '../../context/UIContext';
 import LoginModal from '../common/LoginModal';
 
 const Header = () => {
-    const { toggleSidebar } = useUI();
+    const { toggleSidebar, isMobile } = useUI();
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const { user, isAdmin, logout } = useAuth();
@@ -31,7 +31,7 @@ const Header = () => {
                 </Link>
             </div>
 
-            <form onSubmit={handleSearch} style={styles.center}>
+            <form onSubmit={handleSearch} style={{...styles.center, display: isMobile ? 'none' : 'flex'}}>
                 <div style={styles.searchBar}>
                     <input
                         type="text"
@@ -46,13 +46,7 @@ const Header = () => {
                 </div>
             </form>
 
-            <div style={styles.right}>
-                {isAdmin && (
-                    <Link to="/admin/dashboard" style={styles.iconLink}>
-                        <Upload size={20} />
-                        <span style={styles.iconText}>Admin</span>
-                    </Link>
-                )}
+            <div style={{...styles.right, display: isMobile ? 'none' : 'flex'}}>
                 <Link to="/submit" style={styles.iconLink}>
                     <Upload size={20} />
                     <span style={styles.iconText}>Submit</span>
@@ -102,6 +96,8 @@ const styles = {
     },
     menuButton: {
         color: 'var(--text-primary)',
+        padding: '8px',
+        margin: '-8px',
     },
     logo: {
         fontSize: '24px',
@@ -126,6 +122,7 @@ const styles = {
     },
     searchBar: {
         display: 'flex',
+        width: '100%',
         backgroundColor: '#000',
         borderRadius: '4px',
         overflow: 'hidden',
@@ -146,7 +143,6 @@ const styles = {
         color: '#ccc',
     },
     right: {
-        display: 'flex',
         alignItems: 'center',
         gap: '20px',
     },

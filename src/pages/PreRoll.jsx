@@ -6,14 +6,33 @@ const PreRoll = () => {
     const navigate = useNavigate();
     const [countdown, setCountdown] = useState(5);
 
+    const [isChecking, setIsChecking] = useState(true);
+
     useEffect(() => {
+        // Check if ad was already shown for this video in this session
+        const adShown = sessionStorage.getItem(`adShown_${id}`);
+        
+        if (adShown === 'true') {
+            navigate(`/video/${id}`, { replace: true });
+        } else {
+            setIsChecking(false);
+        }
+    }, [id, navigate]);
+
+    useEffect(() => {
+        if (isChecking) return;
+
         if (countdown > 0) {
             const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
             return () => clearTimeout(timer);
         } else {
-            navigate(`/video/${id}`);
+            // Mark ad as shown in session storage before navigating
+            sessionStorage.setItem(`adShown_${id}`, 'true');
+            navigate(`/video/${id}`, { replace: true });
         }
-    }, [countdown, id, navigate]);
+    }, [countdown, id, navigate, isChecking]);
+
+    if (isChecking) return null;
 
     return (
         <div style={styles.container}>

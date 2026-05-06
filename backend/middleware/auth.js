@@ -23,16 +23,6 @@ const authMiddleware = (req, res, next) => {
 
     const token = parts[1];
 
-    // ✅ DEV SHORTCUT (ADMIN PASSWORD)
-    if (token === process.env.ADMIN_PASSWORD) {
-        req.user = {
-            username: 'admin',
-            role: 'admin',
-            authType: 'password'
-        };
-        return next();
-    }
-
     // ✅ JWT AUTH
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

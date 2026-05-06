@@ -1,7 +1,55 @@
-import React from 'react';
-import { X, Mail, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../config';
 
 const LoginModal = ({ isOpen, onClose }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const { login } = useAuth();
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            // Success!
+            login({ token: data.token, username }, data.role);
+            onClose();
+
+            // Redirect based on role
+            if (data.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/');
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -15,18 +63,40 @@ const LoginModal = ({ isOpen, onClose }) => {
                     <h2 style={styles.title}>Member Login</h2>
                     <p style={styles.sub}>Sign in to interact, like, and comment on videos.</p>
 
-                    <form style={styles.form} onSubmit={e => e.preventDefault()}>
+                    {error && (
+                        <div style={styles.errorBox}>
+                            {error}
+                        </div>
+                    )}
+
+                    <form style={styles.form} onSubmit={handleSubmit}>
                         <div style={styles.inputGroup}>
-                            <Mail size={20} style={styles.icon} />
-                            <input type="email" placeholder="Email Address" style={styles.input} />
+                            <UserIcon size={20} style={styles.icon} />
+                            <input 
+                                type="text" 
+                                placeholder="Username or Email" 
+                                style={styles.input} 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
                         </div>
 
                         <div style={styles.inputGroup}>
                             <Lock size={20} style={styles.icon} />
-                            <input type="password" placeholder="Password" style={styles.input} />
+                            <input 
+                                type="password" 
+                                placeholder="Password" 
+                                style={styles.input} 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
                         </div>
 
-                        <button style={styles.submitBtn}>Sign In</button>
+                        <button style={styles.submitBtn} disabled={isLoading}>
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Sign In'}
+                        </button>
                     </form>
 
                     <div style={styles.divider}>
@@ -80,6 +150,15 @@ const styles = {
         fontSize: '14px',
         marginBottom: '30px',
     },
+    errorBox: {
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        border: '1px solid #ff4444',
+        color: '#ff4444',
+        padding: '10px',
+        borderRadius: '4px',
+        marginBottom: '20px',
+        fontSize: '14px',
+    },
     form: {
         display: 'flex',
         flexDirection: 'column',
@@ -112,6 +191,9 @@ const styles = {
         fontWeight: 'bold',
         fontSize: '16px',
         marginTop: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     divider: {
         margin: '30px 0',

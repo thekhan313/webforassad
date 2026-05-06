@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { Check, X, Play, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE } from '../../config';
 
 const AdminSubmissions = () => {
     const [submissions, setSubmissions] = useState([]);
@@ -15,7 +16,7 @@ const AdminSubmissions = () => {
         if (!token) return;
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:4000/api/admin/submissions', {
+            const res = await fetch(`${API_BASE}/api/admin/submissions`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch');
@@ -38,12 +39,12 @@ const AdminSubmissions = () => {
         try {
             let res;
             if (action === 'delete') {
-                res = await fetch(`http://localhost:4000/api/admin/submission/${id}`, {
+                res = await fetch(`${API_BASE}/api/admin/submission/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else {
-                res = await fetch(`http://localhost:4000/api/admin/submission/${id}`, {
+                res = await fetch(`${API_BASE}/api/admin/submission/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -99,7 +100,7 @@ const AdminSubmissions = () => {
                                     {sub.filePath && (
                                         <div style={styles.fileInfo}>
                                             <span style={styles.fileLabel}>Uploaded File:</span>
-                                            <a href={`http://localhost:4000${sub.filePath}`} target="_blank" rel="noopener noreferrer" style={styles.link}>
+                                            <a href={`${API_BASE}${sub.filePath}`} target="_blank" rel="noopener noreferrer" style={styles.link}>
                                                 {sub.originalName || 'Download File'}
                                             </a>
                                         </div>

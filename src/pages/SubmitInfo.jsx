@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, ShieldCheck, DollarSign, Clock } from 'lucide-react';
+import { API_BASE } from '../config';
 
 const SubmitInfo = () => {
     const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const SubmitInfo = () => {
             data.append('video', formData.videoFile);
             data.append('submittedBy', 'guest'); // Can be updated if auth is present
 
-            const res = await fetch('http://localhost:4000/api/submit-video-file', {
+            const res = await fetch(`${API_BASE}/api/submit-video-file`, {
                 method: 'POST',
                 body: data
             });
