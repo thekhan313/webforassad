@@ -43,10 +43,14 @@ const AdminDashboard = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                setVideos(videos.filter(v => v.id !== id));
+                setVideos(prev => prev.filter(v => v.id !== id));
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Delete failed');
             }
         } catch (err) {
             console.error(err);
+            alert('A network error occurred.');
         }
     };
 
@@ -176,8 +180,15 @@ const AdminDashboard = () => {
 };
 
 const styles = {
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    pageTitle: { fontSize: '28px', color: '#fff' },
+    headerRow: { 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '32px',
+        flexWrap: 'wrap',
+        gap: '12px'
+    },
+    pageTitle: { fontSize: '28px', color: '#fff', margin: 0 },
     statsMini: { display: 'flex', alignItems: 'center', gap: '8px', color: '#aaa', fontSize: '14px' },
     loading: { textAlign: 'center', padding: '40px', color: '#666' },
     videoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' },
@@ -196,10 +207,30 @@ const styles = {
     form: { display: 'flex', flexDirection: 'column', gap: '16px' },
     label: { fontSize: '12px', color: '#666' },
     input: { padding: '12px', background: '#000', border: '1px solid #333', color: '#fff', borderRadius: '8px' },
-    catGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', background: '#000', padding: '12px', borderRadius: '8px', border: '1px solid #333' },
+    catGrid: { 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+        gap: '10px', 
+        background: '#000', 
+        padding: '12px', 
+        borderRadius: '8px', 
+        border: '1px solid #333' 
+    },
     catItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' },
     textarea: { padding: '12px', background: '#000', border: '1px solid #333', color: '#fff', borderRadius: '8px', minHeight: '80px' },
-    saveBtn: { background: 'var(--accent-color)', color: '#000', padding: '14px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '10px' },
+    saveBtn: { 
+        background: 'var(--accent-color)', 
+        color: '#000', 
+        padding: '14px', 
+        borderRadius: '8px', 
+        fontWeight: 'bold', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '8px', 
+        marginTop: '10px',
+        cursor: 'pointer'
+    },
     error: { display: 'flex', alignItems: 'center', gap: '8px', color: '#ff4444', fontSize: '14px' }
 };
 

@@ -112,12 +112,13 @@ const Sidebar = () => {
                             style={{
                                 ...styles.navLink,
                                 backgroundColor:
-                                    selectedCategory === cat ? '#333' : 'transparent',
+                                    selectedCategory === cat ? 'rgba(255, 174, 0, 0.1)' : 'transparent',
                                 color: selectedCategory === cat ? 'var(--accent-color)' : '#eee',
                                 border: 'none',
                                 textAlign: 'left',
                                 width: '100%',
                                 cursor: 'pointer',
+                                paddingLeft: '20px',
                             }}
                         >
                             <Film size={18} style={styles.icon} />
@@ -127,6 +128,12 @@ const Sidebar = () => {
                 </div>
 
                 <div style={styles.adminSection}>
+                    {isAdmin && (
+                        <Link to="/admin/dashboard" style={styles.navLink} onClick={() => handleLinkClick('/admin/dashboard')}>
+                            <ShieldAlert size={20} style={styles.icon} />
+                            <span>Admin Dashboard</span>
+                        </Link>
+                    )}
                 </div>
             </aside>
 
@@ -199,11 +206,13 @@ const styles = {
     navLink: {
         display: 'flex',
         alignItems: 'center',
-        padding: '10px 12px',
-        borderRadius: '4px',
+        padding: '12px 16px',
+        borderRadius: '8px',
         color: '#eee',
-        fontSize: '14px',
-        transition: 'background 0.2s',
+        fontSize: '15px',
+        transition: 'all 0.2s ease',
+        margin: '2px 8px',
+        fontWeight: '500',
     },
     navLinkButton: {
         display: 'flex',
@@ -222,8 +231,9 @@ const styles = {
         color: 'var(--accent-color)',
     },
     icon: {
-        marginRight: '12px',
+        marginRight: '16px',
         color: 'inherit',
+        minWidth: '20px',
     },
     divider: {
         height: '1px',

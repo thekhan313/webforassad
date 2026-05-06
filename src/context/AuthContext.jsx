@@ -11,10 +11,11 @@ export const AuthProvider = ({ children }) => {
     // Check local storage for token on mount
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
+    const username = localStorage.getItem('username');
     
     if (token) {
       // In a real app, we would verify the token with the backend here
-      setUser({ token });
+      setUser({ token, username });
       setIsAdmin(role === 'admin');
     }
     
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, role) => {
     localStorage.setItem('token', userData.token);
     localStorage.setItem('role', role);
+    localStorage.setItem('username', userData.username || '');
     setUser(userData);
     setIsAdmin(role === 'admin');
   };
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('username');
     setUser(null);
     setIsAdmin(false);
   };

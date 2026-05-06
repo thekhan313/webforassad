@@ -144,12 +144,13 @@ const styles = {
     card: {
         backgroundColor: '#111',
         borderRadius: '12px',
-        padding: '24px',
+        padding: '20px',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         gap: '20px',
         border: '1px solid #222',
+        flexWrap: 'wrap',
     },
     info: {
         flex: 1,
@@ -171,6 +172,7 @@ const styles = {
         color: '#666',
         fontSize: '13px',
         alignItems: 'center',
+        flexWrap: 'wrap',
     },
     link: {
         display: 'inline-block',

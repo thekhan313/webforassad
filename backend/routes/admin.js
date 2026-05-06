@@ -9,6 +9,7 @@ const authMiddleware = require('../middleware/auth');
 const VIDEOS_FILE = path.join(__dirname, '../data/videos.json');
 const SUBMISSIONS_FILE = path.join(__dirname, '../data/submissions.json');
 const REPORTS_FILE = path.join(__dirname, '../data/reports.json');
+const USERS_FILE = path.join(__dirname, '../data/users.json');
 
 // Helpers
 const getData = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -16,16 +17,11 @@ const setData = (file, data) =>
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
 /**
- * POST /api/login
+ * POST /api/admin/login
+ * Unified login for both Admin and Users
  */
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
-
-    // Temporary debug logs (availability only)
-    console.log('Login attempt received');
-    console.log('ADMIN_USERNAME defined:', !!process.env.ADMIN_USERNAME);
-    console.log('ADMIN_PASSWORD defined:', !!process.env.ADMIN_PASSWORD);
-    console.log('JWT_SECRET defined:', !!process.env.JWT_SECRET);
 
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required' });
@@ -34,6 +30,7 @@ router.post('/login', (req, res) => {
     const trimmedUsername = username.trim();
     const trimmedPassword = password.trim();
 
+    // 1. Check if it's the Admin
     if (
         trimmedUsername === process.env.ADMIN_USERNAME &&
         trimmedPassword === process.env.ADMIN_PASSWORD
@@ -58,8 +55,89 @@ router.post('/login', (req, res) => {
         });
     }
 
-    console.log('Admin login failed: Invalid credentials');
+    // 2. Proceed with normal user authentication
+    try {
+        if (!fs.existsSync(USERS_FILE)) {
+            fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
+        }
+        
+        const users = getData(USERS_FILE);
+        const user = users.find(u => u.username === trimmedUsername && u.password === trimmedPassword);
+
+        if (user) {
+            const token = jwt.sign(
+                { id: user.id, username: user.username, role: 'user' },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            console.log(`User login successful: ${user.username}`);
+            return res.json({
+                success: true,
+                message: 'Login successful',
+                token,
+                role: 'user'
+            });
+        }
+    } catch (err) {
+        console.error('User Auth Error:', err);
+        return res.status(500).json({ error: 'Server error during authentication' });
+    }
+
+    console.log('Login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });
+});
+
+/**
+ * POST /api/admin/signup
+ * Basic user registration
+ */
+router.post('/signup', (req, res) => {
+    const { username, password, email } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    try {
+        if (!fs.existsSync(USERS_FILE)) {
+            fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
+        }
+
+        const users = getData(USERS_FILE);
+        
+        if (users.find(u => u.username === username.trim())) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+
+        const newUser = {
+            id: uuidv4(),
+            username: username.trim(),
+            password: password.trim(), // In production, hash this!
+            email: email?.trim() || '',
+            role: 'user',
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        setData(USERS_FILE, users);
+
+        const token = jwt.sign(
+            { id: newUser.id, username: newUser.username, role: 'user' },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully',
+            token,
+            role: 'user'
+        });
+    } catch (err) {
+        console.error('Signup Error:', err);
+        res.status(500).json({ error: 'Failed to create account' });
+    }
 });
 
 // 🔒 Protect everything below

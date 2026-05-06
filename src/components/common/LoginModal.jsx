@@ -5,8 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import { API_BASE } from '../../config';
 
 const LoginModal = ({ isOpen, onClose }) => {
+    const [isLoginMode, setIsLoginMode] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
@@ -18,23 +20,28 @@ const LoginModal = ({ isOpen, onClose }) => {
         setError('');
         setIsLoading(true);
 
+        const endpoint = isLoginMode ? '/api/admin/login' : '/api/admin/signup';
+        const body = isLoginMode 
+            ? { username, password } 
+            : { username, password, email };
+
         try {
-            const response = await fetch(`${API_BASE}/api/admin/login`, {
+            const response = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify(body),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Login failed');
+                throw new Error(data.error || 'Authentication failed');
             }
 
             // Success!
-            login({ token: data.token, username }, data.role);
+            login({ token: data.token, username: data.username || username }, data.role);
             onClose();
 
             // Redirect based on role
@@ -60,8 +67,12 @@ const LoginModal = ({ isOpen, onClose }) => {
                 </button>
 
                 <div style={styles.content}>
-                    <h2 style={styles.title}>Member Login</h2>
-                    <p style={styles.sub}>Sign in to interact, like, and comment on videos.</p>
+                    <h2 style={styles.title}>{isLoginMode ? 'Member Login' : 'Create Account'}</h2>
+                    <p style={styles.sub}>
+                        {isLoginMode 
+                            ? 'Sign in to interact, like, and comment on videos.' 
+                            : 'Join our community to upload and interact with videos.'}
+                    </p>
 
                     {error && (
                         <div style={styles.errorBox}>
@@ -70,11 +81,25 @@ const LoginModal = ({ isOpen, onClose }) => {
                     )}
 
                     <form style={styles.form} onSubmit={handleSubmit}>
+                        {!isLoginMode && (
+                            <div style={styles.inputGroup}>
+                                <Mail size={20} style={styles.icon} />
+                                <input 
+                                    type="email" 
+                                    placeholder="Email Address" 
+                                    style={styles.input} 
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        )}
+
                         <div style={styles.inputGroup}>
                             <UserIcon size={20} style={styles.icon} />
                             <input 
                                 type="text" 
-                                placeholder="Username or Email" 
+                                placeholder="Username" 
                                 style={styles.input} 
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
@@ -95,7 +120,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                         </div>
 
                         <button style={styles.submitBtn} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Sign In'}
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLoginMode ? 'Sign In' : 'Sign Up')}
                         </button>
                     </form>
 
@@ -103,7 +128,15 @@ const LoginModal = ({ isOpen, onClose }) => {
                         <span>OR</span>
                     </div>
 
-                    <button style={styles.registerBtn}>Create Free Account</button>
+                    <button 
+                        style={styles.registerBtn} 
+                        onClick={() => {
+                            setIsLoginMode(!isLoginMode);
+                            setError('');
+                        }}
+                    >
+                        {isLoginMode ? 'Create Free Account' : 'Already have an account? Sign In'}
+                    </button>
                 </div>
             </div>
         </div>

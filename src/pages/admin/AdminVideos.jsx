@@ -43,13 +43,15 @@ const AdminVideos = () => {
             });
 
             if (res.ok) {
-                setVideos(videos.filter(v => v.id !== id));
+                setVideos(prev => prev.filter(v => v.id !== id));
+                // Optional: success notification
             } else {
                 const data = await res.json();
                 alert(data.error || 'Delete failed');
             }
         } catch (err) {
             console.error('Delete error:', err);
+            alert('A network error occurred. Please try again.');
         }
     };
 
@@ -208,11 +210,21 @@ const styles = {
         padding: '15px',
         background: '#111',
         borderRadius: '10px',
-        gap: '20px'
+        gap: '20px',
+        flexWrap: 'wrap',
     },
-    thumb: { width: '120px', height: '68px', objectFit: 'cover', borderRadius: '4px' },
-    details: { flex: 1 },
-    title: { fontSize: '16px', marginBottom: '4px' },
+    thumb: { 
+        width: '120px', 
+        height: '68px', 
+        objectFit: 'cover', 
+        borderRadius: '4px',
+        minWidth: '120px',
+    },
+    details: { 
+        flex: 1,
+        minWidth: '200px',
+    },
+    title: { fontSize: '16px', marginBottom: '4px', wordBreak: 'break-word' },
     meta: { fontSize: '12px', color: '#666' },
     actions: { display: 'flex', gap: '10px' },
     editBtn: { color: '#aaa', padding: '8px' },
@@ -228,12 +240,13 @@ const styles = {
     },
     modal: {
         background: '#111',
-        padding: '30px',
+        padding: '20px',
         borderRadius: '12px',
-        width: '100%',
+        width: '95%',
         maxWidth: '600px',
         maxHeight: '90vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        margin: '20px auto',
     },
     modalHeader: {
         display: 'flex',

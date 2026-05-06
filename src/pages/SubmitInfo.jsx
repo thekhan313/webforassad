@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, ShieldCheck, DollarSign, Clock } from 'lucide-react';
 import { API_BASE } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 const SubmitInfo = () => {
     const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const SubmitInfo = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const { user } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,7 +26,7 @@ const SubmitInfo = () => {
             data.append('title', formData.title);
             data.append('description', formData.description);
             data.append('video', formData.videoFile);
-            data.append('submittedBy', 'guest'); // Can be updated if auth is present
+            data.append('submittedBy', user?.username || 'guest');
 
             const res = await fetch(`${API_BASE}/api/submit-video-file`, {
                 method: 'POST',

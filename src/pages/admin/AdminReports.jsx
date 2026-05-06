@@ -139,12 +139,13 @@ const styles = {
     card: {
         backgroundColor: '#111',
         borderRadius: '12px',
-        padding: '24px',
+        padding: '20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         border: '1px solid #222',
         gap: '20px',
+        flexWrap: 'wrap',
     },
     badge: {
         display: 'flex',
@@ -181,6 +182,7 @@ const styles = {
         gap: '12px',
         color: '#555',
         fontSize: '13px',
+        flexWrap: 'wrap',
     },
     actions: {
         display: 'flex',
