@@ -10,5 +10,6 @@ export const CATEGORIES = [
     "afgan",
     "bangal",
     "nepal",
-    "arab"
+    "arab",
+    "Boy"
 ];
